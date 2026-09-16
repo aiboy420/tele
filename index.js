@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import axios from "axios";
 
 // Telegram Bot Token
-const token = "PASTE_YOUR_BOT_TOKEN_HERE";
+const token = "8978168842:AAES56rJIlhTt9BLvTWEmGiT-9p4JJpgIBo";
 
 const apiBase = (process.env.API_BASE_URL || "https://nawazmd.vercel.app/api").replace(/\/+$/, "");
 const endpoint = "/" + (process.env.PAIR_ENDPOINT || "/code").replace(/^\/+/, "");
