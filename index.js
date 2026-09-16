@@ -1,80 +1,77 @@
-import TelegramBot from "node-telegram-bot-api";
-import axios from "axios";
+import 'dotenv/config';
+import TelegramBot from 'node-telegram-bot-api';
 
-// Telegram Bot Token
-const token = "8978168842:AAES56rJIlhTt9BLvTWEmGiT-9p4JJpgIBo";
+const token = process.env.BOT_TOKEN;
 
-const apiBase = (process.env.API_BASE_URL || "https://nawazmd.vercel.app/api").replace(/\/+$/, "");
-const endpoint = "/" + (process.env.PAIR_ENDPOINT || "/code").replace(/^\/+/, "");
-
-if (!token || token === "PASTE_YOUR_BOT_TOKEN_HERE") {
-  console.error("Missing Telegram Bot Token. Add your token in index.js.");
-  process.exit(1);
+if (!token) {
+    console.error('❌ BOT_TOKEN is missing in .env');
+    process.exit(1);
 }
 
 const bot = new TelegramBot(token, { polling: true });
-const waitingForNumber = new Set();
 
-bot.onText(/^\/start(?:@\w+)?$/, async (msg) => {
-  await bot.sendMessage(
-    msg.chat.id,
-    "Welcome to NAWAZ-MD Pair Bot.\\nUse /pair to request a WhatsApp pairing code. Only submit a number you control."
-  );
+const WEBSITE = 'https://nawazmd.vercel.app';
+const HOW_TO_CONNECT = 'https://youtu.be/CUYwhw7SKx0?si=R_1clxYTJZPJw_Ra';
+
+bot.onText(/\/start/, async (msg) => {
+    const chatId = msg.chat.id;
+    const firstName = msg.from?.first_name || 'User';
+
+    const message = `
+👋 Hello ${firstName}!
+
+🤖 *NAWAZ MD BOT*
+
+Welcome to the official Nawaz MD Bot.
+
+Use the buttons below to open the official website and learn how to connect your bot.
+
+⚡ Fast • Simple • Secure
+    `;
+
+    await bot.sendMessage(chatId, message, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: '🌐 Open Nawaz MD',
+                        url: WEBSITE
+                    }
+                ],
+                [
+                    {
+                        text: '📖 How to Connect Bot',
+                        url: HOW_TO_CONNECT
+                    }
+                ]
+            ]
+        }
+    });
 });
 
-bot.onText(/^\/pair(?:@\w+)?$/, async (msg) => {
-  waitingForNumber.add(msg.from.id);
-  await bot.sendMessage(msg.chat.id, "Send your WhatsApp number with country code (digits only). Example: 923001234567");
-});
-
-bot.on("message", async (msg) => {
-  if (!msg.text || msg.text.startsWith("/") || !waitingForNumber.has(msg.from?.id)) return;
-  waitingForNumber.delete(msg.from.id);
-
-  const number = msg.text.replace(/[+\s()-]/g, "");
-  if (!/^\d{8,15}$/.test(number)) {
-    await bot.sendMessage(msg.chat.id, "That number format doesn't look valid. Use country code and digits only, then try /pair again.");
-    return;
-  }
-
-  await bot.sendMessage(msg.chat.id, "Requesting pairing code…");
-
-  try {
-    const result = await requestPairCode(number);
-    const code = result?.pairCode ?? result?.code ?? result?.pairingCode;
-
-    if (!code) {
-      console.error("API response did not contain a recognized code field:", result);
-      await bot.sendMessage(msg.chat.id, "The API replied, but no pairing code field was found. Check the API response format in index.js.");
-      return;
-    }
-
+bot.onText(/\/help/, async (msg) => {
     await bot.sendMessage(
-      msg.chat.id,
-      `Your pairing code: ${code}\n\nEnter it only in the official WhatsApp linking flow. Never share it with anyone.`
+        msg.chat.id,
+        `🤖 *NAWAZ MD BOT HELP*\n\n/start - Open Nawaz MD\n/help - Show help`,
+        {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        {
+                            text: '🌐 Open Website',
+                            url: WEBSITE
+                        }
+                    ]
+                ]
+            }
+        }
     );
-
-  } catch (err) {
-    console.error("Pair API error:", err.response?.data || err.message);
-    await bot.sendMessage(
-      msg.chat.id,
-      "Could not get a pairing code right now. Please try again later or contact support."
-    );
-  }
 });
 
-async function requestPairCode(number) {
-  const { data } = await axios.post(
-    `${apiBase}${endpoint}`,
-    { number },
-    { timeout: 20000 }
-  );
+bot.on('polling_error', (error) => {
+    console.error('Telegram polling error:', error.message);
+});
 
-  return data;
-}
-
-bot.on("polling_error", (err) =>
-  console.error("Telegram polling error:", err.message)
-);
-
-console.log("NAWAZ-MD Telegram Pair Bot is running.");
+console.log('✅ NAWAZ MD Telegram Bot is running...');
