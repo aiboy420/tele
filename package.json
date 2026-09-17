@@ -1,0 +1,9 @@
+{
+  "name": "nawaz-md-telegram-pair-bot",
+  "version": "1.1.0",
+  "description": "Railway-ready Telegram frontend for NAWAZ-MD pairing API",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "axios": "^1.7.9", "telegraf": "^4.16.3" }
+}
